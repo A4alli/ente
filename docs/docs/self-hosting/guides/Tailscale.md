@@ -12,9 +12,6 @@ Before getting start keep the following NOTE in mind.
 > If someone is behind double or triple CGNAT; must install tailscale system wide by running `curl -fsSL https://tailscale.com/install.sh | sh` in your linux terminal and `sudo tailscale up` otherwise dns resolver will fail and uploading will not work. This is not necessary for those who are not behing CGNAT.
 > This guide also work on docker rootless and normal.
 
-> [!CAUTION]
-Remember that current docker update 28.0.0 has some bug and cannot connect to external network. Make sure to install docker-ce 27.5.0, docker-ce-rootless-extras 27.5.0 and docker-ce-cli 27.5.0. Hopefully docker 28.1.0 will resolve this issue in next week. Refrence links are [Moby Github Repo Issues 49511](https://github.com/moby/moby/issues/49511) and [Moby Github Repo Issues 49519](https://github.com/moby/moby/issues/49519)
-
 > [!IMPORTANT]
 > For Docker rootless, the user must have local permissions for all directories required by the Ente-photos self-hosted server. This can be achieved by running `sudo chown -R 1000:1000 /home/ubuntu/docker/ente`. In the Linux terminal, you can check the UID with `id -u` or simply `id`. The first user typically has UID 1000.
 > To allow listening and pinging on any port without root privileges, create a file called `/etc/sysctl.d/99-rootless.conf` with the following content:
@@ -87,6 +84,7 @@ log:
   json: false
 proxyaccesslog: true
 ```
+
 In the same directory run `sudo nano authkey` and paste the authkey just copied earlier from tailscale admin counsel.
 > Here Tailscale (TSDPROXY) setup is complet in all respect. Just run `docker compose up -d`. Check your tailscale amdin counsel and you will see tsdproxy node up and running. Make sure that **HTTPS** is enabled in tailscale DNS settings.
 > You can visit the TSDPROXY web GUI by https://tsdproxy.xyz.ts.net. (xyz is change value for everyone)
@@ -152,6 +150,55 @@ cd /data
 mc mb -p b2-eu-cen
 mc mb -p wasabi-eu-central-2-v3
 mc mb -p scw-eu-fr-v3
+```
+> `cd /home/lee/docker/ente` and `sudo nano museum.yaml` withe the following contant.
+```
+ # HTTP connection parameters
+http:
+    # If true, bind to 443 and use TLS.
+    # By default, this is false, and museum will bind to 8080 without TLS.
+    # use-tls: true
+
+# Specify the base endpoints for various apps
+apps:
+    # Default is https://albums.ente.io
+    #
+    # If you're running a self hosted instance and wish to serve public links,
+    # set this to the URL where your albums web app is running.
+    public-albums: https://ente.xyz.ts.net
+
+# SMTP configuration (optional)
+#
+# Configure credentials here for sending mails from museum (e.g. OTP emails).
+#
+# The smtp credentials will be used if the host is specified. Otherwise it will
+# try to use the transmail credentials. Ideally, one of smtp or transmail should
+# be configured for a production instance.
+#
+# username and password are optional (e.g. if you're using a local relay server
+# and don't need authentication).
+#smtp:
+#    host:
+#    port:
+#    username:
+#    password:
+#    # The email address from which to send the email. Set this to an email
+#    # address whose credentials you're providing.
+#    email:
+
+s3:
+    are_local_buckets: true
+    b2-eu-cen:
+        key: test # change me
+        secret: testtest # change me
+        endpoint: https://minio.forest-gentoo.ts.net
+        region: eu-central-2
+        bucket: b2-eu-cen
+        
+# Add this once you have done the CLI part
+internal:
+    admins:
+        - 1580559962386440
 ```
 
 Now `cd docker/ente` and run `sudo nano docker-compose.yaml` and populate it with the following:
@@ -284,3 +331,6 @@ Type the same Password used before for the account.Run
 This will list all account details. Copy Acount ID.
 > Navigate to museum.yaml file. `cd docker/ente`. Run `sudo nano museum.yaml` and add the account ID under Admins. Delete any previous entries.
 Restart ente-museum-1 container from linux terminal. Run `docker restart ente-museum-1`. All well, now you will have 100TB storage. Repeat if for any other accounts you want to give unlimited storage access.
+
+`cd /home/lee/docker/ente` and `docker compose down` than `cd /home/lee/docker/ente/tsdproxy` and `docker compose down`. Once done...
+In the same directory i-e `/home/lee/docker/ente/tsdproxy` run `docker compose up -d` than `cd /home/lee/docker/ente` and `docker compose up -d`. This is because uploading sometime stuck and going through this process will restart the containers and all good to go.
